@@ -13,6 +13,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.*;
+import java.net.URL;
 import java.net.URLDecoder;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -28,6 +29,9 @@ public class OssUtil {
 
     @Value("${oss.bucketUrl}")
     private String OSS_BUCKET_URL;
+
+    @Value("${oss.accessUrlExpiration}")
+    private int OSS_ACCESS_URL_EXPIRATION;
 
     @Value("${directory.chunk}")
     private String CHUNK_DIRECTORY;   // 分片存储目录
@@ -242,5 +246,57 @@ public class OssUtil {
         } catch (ClientException ce) {
             log.error("OSS连接出错了:" + ce.getMessage());
         }
+    }
+
+    /**
+     * 获取OSS资源临时访问路径
+     * @param publicUrl 资源公共访问路径（从数据库中获得）
+     * @return 目标资源临时访问路径
+     */
+    public String getTempAccessUrl(@NonNull String publicUrl) {
+        String objectName = getObjectName(publicUrl);
+        Date expiration = new Date(new Date().getTime() + OSS_ACCESS_URL_EXPIRATION);
+        try {
+            log.info("即将生成资源[{}]的临时访问URL", objectName);
+            URL url = ossClient.generatePresignedUrl(OSS_BUCKET, objectName, expiration);
+            log.info("生成OSS资源临时访问URL: [{}]", url);
+
+            return url.toString();
+
+        } catch (OSSException oe) {
+            log.error("Caught an OSSException, which means your request made it to OSS, "
+                    + "but was rejected with an error response for some reason.");
+            log.error("Error Message: {}", oe.getErrorMessage());
+            log.error("Error Code: {}", oe.getErrorCode());
+            log.error("Request ID: {}", oe.getRequestId());
+            log.error("Host ID: {}", oe.getHostId());
+        } catch (ClientException ce) {
+            log.error("Caught an ClientException, which means the client encountered "
+                    + "a serious internal problem while trying to communicate with OSS, "
+                    + "such as not being able to access the network.");
+            log.error("Error Message: {}", ce.getMessage());
+        }
+
+        return null;
+    }
+
+    /**
+     * 获取OSS资源objectName
+     * @param resourceUrl OSS资源功能访问路径
+     * @return
+     */
+    public String getObjectName(@NonNull String resourceUrl) {
+        int offset = -1;
+        if (resourceUrl.contains("https")) offset = 0;
+
+        int dividerIdx = resourceUrl.indexOf('?');
+        if (dividerIdx != -1) {
+            log.warn("资源URL[{}]已经是临时访问URL，将直接更新", resourceUrl);
+            return resourceUrl.substring(OSS_BUCKET_URL.length() + offset, dividerIdx);
+        }
+        else {
+            return resourceUrl.substring(OSS_BUCKET_URL.length() + offset);
+        }
+
     }
 }

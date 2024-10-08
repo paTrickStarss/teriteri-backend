@@ -69,6 +69,9 @@ public class UserServiceImpl implements UserService {
             if (user == null) {
                 return null;    // 如果uid不存在则返回空
             }
+
+            user.setAvatar(ossUtil.getTempAccessUrl(user.getAvatar()));
+
             User finalUser = user;
             CompletableFuture.runAsync(() -> {
                 redisUtil.setExObjectValue("user:" + finalUser.getUid(), finalUser);  // 默认存活1小时
@@ -144,6 +147,7 @@ public class UserServiceImpl implements UserService {
                             .findFirst()
                             .orElse(null);
                     if (user == null) return Stream.empty();
+                    user.setAvatar(ossUtil.getTempAccessUrl(user.getAvatar()));
                     UserDTO userDTO = new UserDTO(
                             user.getUid(),
                             user.getNickname(),

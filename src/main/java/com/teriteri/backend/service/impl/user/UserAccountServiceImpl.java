@@ -16,6 +16,7 @@ import com.teriteri.backend.service.user.UserService;
 import com.teriteri.backend.service.utils.CurrentUser;
 import com.teriteri.backend.utils.ESUtil;
 import com.teriteri.backend.utils.JwtUtil;
+import com.teriteri.backend.utils.OssUtil;
 import com.teriteri.backend.utils.RedisUtil;
 import io.netty.channel.*;
 import lombok.extern.slf4j.Slf4j;
@@ -29,6 +30,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -52,6 +54,9 @@ public class UserAccountServiceImpl implements UserAccountService {
 
     @Autowired
     private RedisUtil redisUtil;
+
+    @Resource
+    private OssUtil ossUtil;
 
     @Autowired
     private JwtUtil jwtUtil;
@@ -198,6 +203,7 @@ public class UserAccountServiceImpl implements UserAccountService {
         //将用户取出来
         UserDetailsImpl loginUser = (UserDetailsImpl) authenticate.getPrincipal();
         User user = loginUser.getUser();
+        user.setAvatar(ossUtil.getTempAccessUrl(user.getAvatar()));
 
         // 顺便更新redis中的数据
         redisUtil.setExObjectValue("user:" + user.getUid(), user);  // 默认存活1小时
@@ -259,6 +265,7 @@ public class UserAccountServiceImpl implements UserAccountService {
         Authentication authenticate = authenticationProvider.authenticate(authenticationToken);
         UserDetailsImpl loginUser = (UserDetailsImpl) authenticate.getPrincipal();
         User user = loginUser.getUser();
+        user.setAvatar(ossUtil.getTempAccessUrl(user.getAvatar()));
         CustomResponse customResponse = new CustomResponse();
         // 普通用户无权访问
         if (user.getRole() == 0) {
@@ -327,6 +334,8 @@ public class UserAccountServiceImpl implements UserAccountService {
             return customResponse;
         }
 
+        userDTO.setAvatar_url(ossUtil.getTempAccessUrl(userDTO.getAvatar_url()));
+
         customResponse.setData(userDTO);
         return customResponse;
     }
@@ -343,6 +352,7 @@ public class UserAccountServiceImpl implements UserAccountService {
         // 如果redis中没有user数据，就从mysql中获取并更新到redis
         if (user == null) {
             user = userMapper.selectById(LoginUserId);
+            user.setAvatar(ossUtil.getTempAccessUrl(user.getAvatar()));
             User finalUser = user;
             CompletableFuture.runAsync(() -> {
                 redisUtil.setExObjectValue("user:" + finalUser.getUid(), finalUser);  // 默认存活1小时

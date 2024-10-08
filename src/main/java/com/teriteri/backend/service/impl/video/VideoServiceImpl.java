@@ -147,6 +147,7 @@ public class VideoServiceImpl implements VideoService {
                 QueryWrapper<Video> queryWrapper = new QueryWrapper<>();
                 queryWrapper.in("vid", idList);
                 List<Video> videos = videoMapper.selectList(queryWrapper);
+                setVideoUrls(videos);
                 if (videos.isEmpty()) {
                     sqlSession.commit();
                     return Collections.emptyList();
@@ -181,11 +182,13 @@ public class VideoServiceImpl implements VideoService {
                     categoryFuture.join();
                     return Stream.of(map);
                 }).collect(Collectors.toList());
-            } else if (Objects.equals(column, "upload_date")) {
+            }
+            else if (Objects.equals(column, "upload_date")) {
                 // 如果按投稿日期排序，就先查video表
                 QueryWrapper<Video> queryWrapper = new QueryWrapper<>();
                 queryWrapper.in("vid", idList).orderByDesc(column).last("LIMIT " + quantity + " OFFSET " + (page - 1) * quantity);
                 List<Video> list = videoMapper.selectList(queryWrapper);
+                setVideoUrls(list);
                 if (list.isEmpty()) {
                     sqlSession.commit();
                     return Collections.emptyList();
@@ -214,7 +217,8 @@ public class VideoServiceImpl implements VideoService {
                     categoryFuture.join();
                     return map;
                 }).collect(Collectors.toList());
-            } else {
+            }
+            else {
                 // 否则按视频数据排序，就先查数据
                 QueryWrapper<VideoStats> queryWrapper = new QueryWrapper<>();
                 queryWrapper.in("vid", idList).orderByDesc(column).last("LIMIT " + quantity + " OFFSET " + (page - 1) * quantity);
@@ -236,6 +240,7 @@ public class VideoServiceImpl implements VideoService {
                         map.put("video", video1);
                         return map;
                     }
+                    setVideoUrls(video);
                     map.put("video", video);
                     map.put("stats", videoStats);
                     CompletableFuture<Void> userFuture = CompletableFuture.runAsync(() -> {
@@ -252,6 +257,26 @@ public class VideoServiceImpl implements VideoService {
             sqlSession.commit();
             return result;
         }
+    }
+
+    /**
+     * 更新视频资源OSS临时访问URL
+     * @param videos
+     */
+    private void setVideoUrls(List<Video> videos) {
+        for (Video video : videos) {
+            video.setCoverUrl(ossUtil.getTempAccessUrl(video.getCoverUrl()));
+            video.setVideoUrl(ossUtil.getTempAccessUrl(video.getVideoUrl()));
+        }
+    }
+
+    /**
+     * 更新视频资源OSS临时访问URL
+     * @param video
+     */
+    private void setVideoUrls(Video video) {
+        video.setCoverUrl(ossUtil.getTempAccessUrl(video.getCoverUrl()));
+        video.setVideoUrl(ossUtil.getTempAccessUrl(video.getVideoUrl()));
     }
 
     /**
