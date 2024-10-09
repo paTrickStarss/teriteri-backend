@@ -216,4 +216,17 @@ public class UserVideoServiceImpl implements UserVideoService {
         }, taskExecutor);
         userVideoMapper.update(null, updateWrapper);
     }
+
+    /**
+     * 查询用户投稿视频vid
+     *
+     * @param uid 用户uid
+     * @return 该用户所有投稿视频的uid
+     */
+    @Override
+    public List<Integer> selectVidByUid(Integer uid) {
+
+
+        return null;
+    }
 }

@@ -295,6 +295,7 @@ public class VideoServiceImpl implements VideoService {
             queryWrapper.eq("vid", vid).ne("status", 3);
             video = videoMapper.selectOne(queryWrapper);
             if (video != null) {
+                setVideoUrls(video);
                 Video finalVideo1 = video;
                 CompletableFuture.runAsync(() -> {
                     redisUtil.setExObjectValue("video:" + vid, finalVideo1);    // 异步更新到redis
@@ -345,6 +346,7 @@ public class VideoServiceImpl implements VideoService {
                     if (video == null) {
                         return Stream.empty(); // 跳过该项
                     }
+                    setVideoUrls(video);
                     map.put("video", video);
 
                     CompletableFuture<Void> userFuture = CompletableFuture.runAsync(() -> {

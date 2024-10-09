@@ -308,7 +308,7 @@ public class VideoUploadServiceImpl implements VideoUploadService {
         CompletableFuture.runAsync(() -> redisUtil.setExObjectValue("video:" + video.getVid(), video), taskExecutor);
         CompletableFuture.runAsync(() -> redisUtil.addMember("video_status:0", video.getVid()), taskExecutor);
         CompletableFuture.runAsync(() -> redisUtil.setExObjectValue("videoStats:" + video.getVid(), videoStats), taskExecutor);
-        CompletableFuture.runAsync(() -> redisUtil.zset("user_video_upload:" + video.getUid(), video.getVid()), taskExecutor);
+        CompletableFuture.runAsync(() -> redisUtil.addMember("user_video_upload:" + video.getUid(), video.getVid()), taskExecutor);
 
         // 其他逻辑 （发送消息通知写库成功）
     }

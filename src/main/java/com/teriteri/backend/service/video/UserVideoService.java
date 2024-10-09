@@ -2,6 +2,8 @@ package com.teriteri.backend.service.video;
 
 import com.teriteri.backend.pojo.UserVideo;
 
+import java.util.List;
+
 public interface UserVideoService {
     /**
      * 更新播放次数以及最近播放时间，顺便返回记录信息，没有记录则创建新记录
@@ -28,4 +30,11 @@ public interface UserVideoService {
      * @param isCollect 是否收藏 true收藏 false取消
      */
     void collectOrCancel(Integer uid, Integer vid, boolean isCollect);
+
+    /**
+     * 查询用户投稿视频vid
+     * @param uid 用户uid
+     * @return 该用户所有投稿视频的uid
+     */
+    List<Integer> selectVidByUid(Integer uid);
 }

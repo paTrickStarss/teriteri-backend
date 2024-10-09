@@ -6,6 +6,7 @@ import com.teriteri.backend.pojo.CustomResponse;
 import com.teriteri.backend.pojo.FavoriteVideo;
 import com.teriteri.backend.pojo.Video;
 import com.teriteri.backend.service.utils.CurrentUser;
+import com.teriteri.backend.service.video.UserVideoService;
 import com.teriteri.backend.service.video.VideoService;
 import com.teriteri.backend.utils.RedisUtil;
 import org.apache.ibatis.session.ExecutorType;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.annotation.Resource;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -24,6 +26,9 @@ import java.util.stream.Collectors;
 public class VideoController {
     @Autowired
     private VideoService videoService;
+
+    @Resource
+    private UserVideoService userVideoService;
 
     @Autowired
     private FavoriteVideoMapper favoriteVideoMapper;
@@ -167,17 +172,35 @@ public class VideoController {
         CustomResponse customResponse = new CustomResponse();
         Map<String, Object> map = new HashMap<>();
         Set<Object> set = redisUtil.zReverange("user_video_upload:" + uid, 0, -1);
-        if (set == null || set.isEmpty()) {
+        List<Integer> list = new ArrayList<>();
+        if (set == null) {
+            // 缓存不存在，查询DB
+            List<Integer> vidList = userVideoService.selectVidByUid(uid);
+            if (vidList.isEmpty()) {
+                // 该用户不存在已上传的视频
+                map.put("count", 0);
+                map.put("list", Collections.emptyList());
+                customResponse.setData(map);
+                return customResponse;
+            }
+            else {
+                list.addAll(vidList);
+                map.put("count", list.size());
+            }
+
+        }
+        else if (set.isEmpty()) {
+            // 缓存命中，该用户不存在已上传的视频
             map.put("count", 0);
             map.put("list", Collections.emptyList());
             customResponse.setData(map);
             return customResponse;
         }
-        List<Integer> list = new ArrayList<>();
-        set.forEach(vid -> {
-            list.add((Integer) vid);
-        });
-        map.put("count", set.size());
+        else {
+            // 缓存命中，该用户存在已上传的视频
+            set.forEach(vid -> list.add((Integer) vid));
+            map.put("count", set.size());
+        }
         switch (rule) {
             case 1:
                 map.put("list", videoService.getVideosWithDataByIdsOrderByDesc(list, "upload_date", page, quantity));
