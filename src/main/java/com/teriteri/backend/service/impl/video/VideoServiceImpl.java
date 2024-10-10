@@ -111,6 +111,7 @@ public class VideoServiceImpl implements VideoService {
 //                    long start = System.currentTimeMillis();
 //                    System.out.println("================ 开始查询 " + video.getVid() + " 号视频相关信息 ===============   当前时间 " + start);
                     Map<String, Object> map = new HashMap<>();
+                    setVideoUrls(video);
                     map.put("video", video);
 
                     CompletableFuture<Void> userFuture = CompletableFuture.runAsync(() -> {
@@ -170,6 +171,7 @@ public class VideoServiceImpl implements VideoService {
                         map.put("video", video1);
                         return Stream.of(map);
                     }
+                    setVideoUrls(videos);
                     map.put("video", video);
                     CompletableFuture<Void> userFuture = CompletableFuture.runAsync(() -> {
                         map.put("user", userService.getUserById(video.getUid()));
@@ -205,6 +207,7 @@ public class VideoServiceImpl implements VideoService {
                         map.put("video", video1);
                         return map;
                     }
+                    setVideoUrls(video);
                     map.put("video", video);
                     CompletableFuture<Void> userFuture = CompletableFuture.runAsync(() -> {
                         map.put("user", userService.getUserById(video.getUid()));
