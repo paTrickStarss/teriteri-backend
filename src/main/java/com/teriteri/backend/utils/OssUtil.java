@@ -257,9 +257,9 @@ public class OssUtil {
         String objectName = getObjectName(publicUrl);
         Date expiration = new Date(new Date().getTime() + OSS_ACCESS_URL_EXPIRATION);
         try {
-            log.info("即将生成资源[{}]的临时访问URL", objectName);
+//            log.info("即将生成资源[{}]的临时访问URL", objectName);
             URL url = ossClient.generatePresignedUrl(OSS_BUCKET, objectName, expiration);
-            log.info("生成OSS资源临时访问URL: [{}]", url);
+//            log.info("生成OSS资源临时访问URL: [{}]", url);
 
             return url.toString();
 
@@ -291,7 +291,7 @@ public class OssUtil {
 
         int dividerIdx = resourceUrl.indexOf('?');
         if (dividerIdx != -1) {
-            log.warn("资源URL[{}]已经是临时访问URL，将直接更新", resourceUrl);
+//            log.warn("资源URL[{}]已经是临时访问URL，将直接更新", resourceUrl);
             return resourceUrl.substring(OSS_BUCKET_URL.length() + offset, dividerIdx);
         }
         else {

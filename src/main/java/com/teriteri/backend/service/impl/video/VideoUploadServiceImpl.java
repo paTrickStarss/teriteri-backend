@@ -1,6 +1,5 @@
 package com.teriteri.backend.service.impl.video;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.teriteri.backend.mapper.VideoMapper;
 import com.teriteri.backend.mapper.VideoStatsMapper;
 import com.teriteri.backend.pojo.CustomResponse;
@@ -308,7 +307,9 @@ public class VideoUploadServiceImpl implements VideoUploadService {
         CompletableFuture.runAsync(() -> redisUtil.setExObjectValue("video:" + video.getVid(), video), taskExecutor);
         CompletableFuture.runAsync(() -> redisUtil.addMember("video_status:0", video.getVid()), taskExecutor);
         CompletableFuture.runAsync(() -> redisUtil.setExObjectValue("videoStats:" + video.getVid(), videoStats), taskExecutor);
-        CompletableFuture.runAsync(() -> redisUtil.addMember("user_video_upload:" + video.getUid(), video.getVid()), taskExecutor);
+
+        // 这个key存放的是用户上传过审的视频，刚上传还没过审，故不存入（通过管理后台审核视频）
+//        CompletableFuture.runAsync(() -> redisUtil.addMember("user_video_upload:" + video.getUid(), video.getVid()), taskExecutor);
 
         // 其他逻辑 （发送消息通知写库成功）
     }
